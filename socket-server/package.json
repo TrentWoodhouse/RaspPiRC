@@ -1,0 +1,17 @@
+{
+  "name": "socket-server",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap-vue": "^2.21.2",
+    "express": "^4.17.1",
+    "http": "0.0.1-security",
+    "socket.io": "^2.4.1",
+    "socket.io-stream": "^0.9.1"
+  }
+}
