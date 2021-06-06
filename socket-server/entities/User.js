@@ -1,7 +1,8 @@
 class User {
+	static counter = 0;
 	constructor(id, name) {
 		this.id = id;
-		this.colorCode = userInc++;
+		this.colorCode = User.counter++;
 		this.name = name;
 	}
 }

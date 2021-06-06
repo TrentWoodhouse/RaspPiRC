@@ -1,48 +1,42 @@
-let { User } = require('../entities');
-let { config } = require('../config');
+const { io, state } = require('../server');
+const { User } = require('../entities/User');
 
-const UserController = {
-	updateState(data) {
-		io.emit('main.update-state', data);
-	},
-	join(socket, data) {
-		if(!userList.has(socket.id)) {
-			console.log(data.name + ' connected');
-			socket.broadcast.emit('message.post', {
-				message: data.name + " has joined.",
-				isAnnouncement: true,
-			});
-			socket.emit('message.post', {
-				message: "You have joined as " + data.name + ".",
-				isAnnouncement: true,
-			});
-			userList.set(socket.id, new User(socket.id, data.name));
-			this.updateState({
-				size: userList.size,
-			});
+class UserController {
+	constructor(socket, messager) {
+		this.socket = socket;
+		this.messager = messager;
+	}
+
+	join(name) {
+		if(!state.userExists(this.socket.id)) {
+			this.messager.systemMessage(`${name} has joined`, {to: 'others'});
+			this.messager.systemMessage(`You have joined as ${name}`, {to: 'self', log: false});
+			state.addUser(new User(this.socket.id, name)).broadcast();
 		}
-	},
-	disconnect(socket, data) {
-		if (userList.has(socket.id)) {
-			let user = userList.get(socket.id);
-			console.log(user.name + ' disconnected');
-			socket.broadcast.emit('message.post', {
-				message: user.name + " has left.",
-				isAnnouncement: true,
-			});
-			userList.delete(socket.id);
-			this.updateState({
-				size: userList.size,
-			});
+	}
+
+	enqueue() {
+		state.enqueueUser(this.socket.id).broadcast();
+	}
+
+	dequeue() {
+		state.dequeueUser(this.socket.id).broadcast();
+	}
+
+	sendData(data) {
+		if(state.rc && !state.queue.isEmpty() && state.queue.getFirst().id === this.socket.id) {
+			io.to(state.rc.id).emit('rc.data', data);
 		}
-		if (queue.contains(socket.id)) {
-			queue.remove(socket.id);
-			this.updateState({
-				queue: queue.getAll(),
-				startTime: queue.size() > config.FREE_USE_CUTOFF ? timer.startTime : null,
-			});
+	}
+
+	disconnect() {
+		if (state.userExists(this.socket.id)) {
+			let user = state.userList.get(this.socket.id);
+			this.messager.systemMessage(`${user.name} has left`);
+			state.removeUser(this.socket.id);
 		}
-	},
+		state.dequeueUser(this.socket.id).broadcast();
+	}
 }
 
 module.exports = { UserController };

@@ -1,52 +1,48 @@
 let express = require('express');
 let app = express();
 let server = require('http').createServer(app);
-let { UserController, MessageController, QueueController, RcController } = require('./controllers');
-let { Queue, Timer } = require('./entities');
+let { UserController } = require('./controllers/UserController');
+let { RcController } = require('./controllers/RcController');
+let { Messenger } = require('./entities/Messager');
+let { State } = require('./entities/State');
 let { config } = require('./config');
 
 server.listen(config.PORT);
 console.log("Server started on port " + config.PORT);
 
-global.io = require('socket.io')(server);
-global.path = require('path');
-global.RC = null;
-global.userList = new Map();
-global.userInc = 0;
-global.queue = new Queue();
-global.timer = new Timer(config.CONTROL_TIME, () => {
-    if(queue.size() > config.FREE_USE_CUTOFF) {
-        queue.shift();
-        UserController.updateState({
-            queue: queue.getAll(),
-            startTime: queue.size() > config.FREE_USE_CUTOFF ? timer.startTime : null,
-        });
-    }
-});
+let io = require('socket.io')(server);
+
+const state = new State();
 
 io.on('connection', (socket) => {
     console.log('New Connection');
-    UserController.updateState({
-        rc: RC,
-        queue: queue.getAll(),
-        startTime: queue.size() > config.FREE_USE_CUTOFF ? timer.startTime : null,
-        timeLength: timer.timeLength,
-        size: userList.size,
-    });
+    state.broadcastInit(socket);
 
-    // socket.on('main.video', frame => socket.broadcast.emit('video', frame));
-    socket.on('message.post', data => MessageController.message(socket, data));
-    socket.on('user.join', data => UserController.join(socket, data));
-    socket.on('rc.join', () => RcController.join(socket));
-    socket.on('rc.data', data => RcController.data(socket, data));
-    socket.on('queue.enqueue', data => QueueController.enqueue(socket, data));
-    socket.on('queue.dequeue', data => QueueController.dequeue(socket, data));
+    let messenger = new Messenger(socket);
+    let userController;
+    let rcController;
+
+
+    socket.on('message.post', message => messenger.message(message));
+    socket.on('user.join', name => {
+        userController = new UserController(socket, messenger);
+        userController.join(name);
+    });
+    socket.on('user.send-data', data => userController.sendData(data));
+    socket.on('user.enqueue', data => userController.enqueue(data));
+    socket.on('user.dequeue', data => userController.dequeue(data));
+    socket.on('rc.join', () => {
+        rcController = new RcController(socket, messenger);
+        rcController.join(name);
+    });
     socket.on('disconnect', data => {
-        if(RC && socket.id === RC.id) {
-            RcController.disconnect(socket, data);
+        if(rc && socket.id === rc.id) {
+            rcController.disconnect();
         }
         else {
-            UserController.disconnect(socket, data);
+            userController.disconnect();
         }
     });
 });
+
+module.exports = { io, state };
