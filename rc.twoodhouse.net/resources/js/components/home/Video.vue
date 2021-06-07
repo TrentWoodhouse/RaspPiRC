@@ -68,17 +68,12 @@
         mounted() {
             this.controller = !this.isMobile ?
                 new KeyboardController(document, config.FPS, (data) => {
-                    this.$socket.emit('rc.data', data);
+                    this.$socket.emit('user.send-data', data);
                 }) :
                 new TouchscreenController(document.getElementById('video'), config.FPS, 50, (data) => {
-                    this.$socket.emit('rc.data', data);
+                    this.$socket.emit('user.send-data', data);
                 })
         },
-        // sockets: {
-		//     'main.video'(frame) {
-		//         this.src = 'data:image/jpg;base64,' + frame;
-        //     }
-        // }
 	}
 </script>
 

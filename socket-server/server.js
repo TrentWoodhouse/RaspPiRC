@@ -3,7 +3,7 @@ let app = express();
 let server = require('http').createServer(app);
 let { UserController } = require('./controllers/UserController');
 let { RcController } = require('./controllers/RcController');
-let { Messenger } = require('./entities/Messager');
+let { Messenger } = require('./entities/Messenger');
 let { State } = require('./entities/State');
 let { config } = require('./config');
 
@@ -11,38 +11,28 @@ server.listen(config.PORT);
 console.log("Server started on port " + config.PORT);
 
 let io = require('socket.io')(server);
-
-const state = new State();
+const state = new State(io);
 
 io.on('connection', (socket) => {
     console.log('New Connection');
     state.broadcastInit(socket);
 
-    let messenger = new Messenger(socket);
-    let userController;
-    let rcController;
-
+    const messenger = new Messenger(io, socket, state);
+    let controller;
 
     socket.on('message.post', message => messenger.message(message));
     socket.on('user.join', name => {
-        userController = new UserController(socket, messenger);
-        userController.join(name);
+        controller = new UserController(io, socket, state, messenger);
+        controller.join(name);
     });
-    socket.on('user.send-data', data => userController.sendData(data));
-    socket.on('user.enqueue', data => userController.enqueue(data));
-    socket.on('user.dequeue', data => userController.dequeue(data));
+    socket.on('user.send-data', data => controller.sendData(data));
+    socket.on('user.enqueue', data => controller.enqueue(data));
+    socket.on('user.dequeue', data => controller.dequeue(data));
     socket.on('rc.join', () => {
-        rcController = new RcController(socket, messenger);
-        rcController.join(name);
+        controller = new RcController(socket, state, messenger);
+        controller.join();
     });
-    socket.on('disconnect', data => {
-        if(rc && socket.id === rc.id) {
-            rcController.disconnect();
-        }
-        else {
-            userController.disconnect();
-        }
+    socket.on('disconnect', () => {
+        controller.disconnect();
     });
 });
-
-module.exports = { io, state };

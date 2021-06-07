@@ -73,9 +73,7 @@
                     _name = 'Anonymous ' + end;
                 }
                 this.$store.commit('update', { name: _name })
-                this.$socket.emit('user.join', {
-                    name: _name,
-                });
+                this.$socket.emit('user.join', _name);
                 $('#modal').modal('hide');
             },
         }

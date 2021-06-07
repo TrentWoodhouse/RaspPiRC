@@ -2,6 +2,9 @@
     "folders": [
         {
             "path": "socket-server"
+        },
+        {
+            "path": "rc.twoodhouse.net"
         }
     ]
 }
