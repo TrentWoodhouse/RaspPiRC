@@ -1,10 +1,7 @@
 {
     "folders": [
         {
-            "path": "rc.twoodhouse.net"
-        },
-        {
-            "path": "socket-server"
+            "path": "rc.twoodhouse.net/resources/js/components/home"
         }
     ]
 }

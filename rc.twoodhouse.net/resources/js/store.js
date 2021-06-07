@@ -3,6 +3,8 @@ import Vuex from 'vuex';
 import enums from './enums';
 Vue.use(Vuex);
 
+let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 let store = new Vuex.Store({
     state: {
         rc: null,
@@ -11,13 +13,12 @@ let store = new Vuex.Store({
         messages: [],
         size: 0,
         name: '',
-        startTime: null,
-        timeLength: null,
+        stopTime: null,
         windowHeight: 0,
         windowWidth: 0,
-        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+        isMobile: isMobile,
         settings: {
-            controller: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? enums.controllers.TOUCH : enums.controllers.KEY,
+            controller: isMobile ? enums.controllers.TOUCH : enums.controllers.KEY,
             compact: false,
             hideChat: false,
         }
@@ -41,14 +42,13 @@ let store = new Vuex.Store({
     },
     mutations: {
         addMessage(state, message) {
-            message.timestamp = Date.now();
             state.messages.push(message);
         },
         update(state, payload) {
             Object.assign(state, payload);
         },
         updateSettings(state, payload) {
-            Object.assign(state.settings, payload);
+            state.settings = Object.assign({}, state.settings, payload);
         },
     },
 });

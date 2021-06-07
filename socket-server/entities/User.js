@@ -1,8 +1,8 @@
 class User {
-	constructor(id, name) {
+	constructor(id, name, colorCode) {
 		this.id = id;
-		this.colorCode = userInc++;
 		this.name = name;
+		this.colorCode = colorCode;
 		this.isAdmin = false;
 	}
 }
