@@ -9,8 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "child_process": "^1.0.2",
     "express": "^4.17.1",
     "mjpeg-camera": "^2.0.0",
+    "pigpio": "^3.3.1",
     "socket.io-client": "^2.4.0"
   }
 }
