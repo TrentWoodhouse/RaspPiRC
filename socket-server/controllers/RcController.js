@@ -1,10 +1,10 @@
 let { RCCar } = require('../entities/RCCar');
 
 class RcController {
-	constructor(socket, state, messager) {
+	constructor(socket, state, messenger) {
 		this.socket = socket;
 		this.state = state;
-		this.messager = messager;
+		this.messenger = messenger;
 	}
 
 	join() {
@@ -14,7 +14,7 @@ class RcController {
 				ip = ip.substr(7)
 			}
 			this.state.setRc(new RCCar(this.socket.id, ip)).broadcast();
-			this.messager.systemMessage('RC car has connected');
+			this.messenger.systemMessage('RC car has connected');
 		}
 		else {
 			this.socket.disconnect();
@@ -23,7 +23,7 @@ class RcController {
 
 	disconnect() {
 		this.state.setRc(null).broadcast();
-		this.messager.systemMessage('RC car has disconnected');
+		this.messenger.systemMessage('RC car has disconnected');
 	}
 }
 

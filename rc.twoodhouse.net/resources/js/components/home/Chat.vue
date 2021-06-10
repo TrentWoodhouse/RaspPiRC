@@ -11,7 +11,7 @@
                 <div v-else-if="message.type === 'system'" class="text-secondary">
                     <i>{{ message.text }}</i>
                 </div>
-                <div v-else-if="message.type === 'notification'">
+                <div v-else-if="message.type === 'announcement'">
                     <i class="text-yellow">[ANNOUNCEMENT] {{ message.text }}</i>
                 </div>
             </div>

@@ -3,6 +3,7 @@ let app = express();
 let server = require('http').createServer(app);
 let { UserController } = require('./controllers/UserController');
 let { RcController } = require('./controllers/RcController');
+let { CommandController } = require('./controllers/CommandController');
 let { Messenger } = require('./entities/Messenger');
 let { State } = require('./entities/State');
 let { config } = require('./config');
@@ -18,9 +19,17 @@ io.on('connection', (socket) => {
     state.broadcastInit(socket);
 
     const messenger = new Messenger(io, socket, state);
+    const commandController = new CommandController(io, socket, state, messenger);
     let controller;
 
-    socket.on('message.post', message => messenger.message(message));
+    socket.on('message.post', message => {
+        if(commandController.isCommand(message)) {
+            commandController.run(message);
+        }
+        else {
+            messenger.message(message);
+        }
+    });
     socket.on('user.join', name => {
         controller = new UserController(io, socket, state, messenger);
         controller.join(name);
@@ -33,6 +42,8 @@ io.on('connection', (socket) => {
         controller.join();
     });
     socket.on('disconnect', () => {
-        controller.disconnect();
+        if(!!controller) {
+            controller.disconnect();
+        }
     });
 });
