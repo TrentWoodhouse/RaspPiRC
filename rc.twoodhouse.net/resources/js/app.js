@@ -16,7 +16,6 @@ Vue.use(new VueSocketIO({
     connection: process.env.MIX_APP_URL + ':' + config.PORT,
 }));
 Vue.axios.defaults.baseURL = '/api';
-
 import App from './components/App';
 import Home from './components/Home';
 

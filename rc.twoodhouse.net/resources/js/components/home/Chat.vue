@@ -4,22 +4,15 @@
             v-if="!hideChat"
             :class="{'dark-background': rcIsConnected, rounded: rcIsConnected}"
         >
-            <div v-for="message in messages" :key="message.timestamp" class="messages-item">
-                <div v-if="!compact">
-                    <div v-if="!message.isAnnouncement">
-                        <span :class="color(message.colorCode)">{{ message.name }}:</span> {{ message.message }}
-                    </div>
-                    <div v-else class="text-secondary">
-                        <i>{{ message.message }}</i>
-                    </div>
+            <div v-for="(message, index) in messages" :key="index" class="messages-item">
+                <div v-if="message.type === 'message'">
+                    <span :class="color(message.colorCode)">{{ message.name }}:</span> {{ message.text }}
                 </div>
-                <div v-else>
-                    <small v-if="!message.isAnnouncement">
-                        <span :class="color(message.colorCode)">{{ message.name }}:</span> {{ message.message }}
-                    </small>
-                    <small v-else class="text-secondary">
-                        <i>{{ message.message }}</i>
-                    </small>
+                <div v-else-if="message.type === 'system'" class="text-secondary">
+                    <i>{{ message.text }}</i>
+                </div>
+                <div v-else-if="message.type === 'announcement'">
+                    <i class="text-yellow">[ANNOUNCEMENT] {{ message.text }}</i>
                 </div>
             </div>
             <div class="no-select">
@@ -77,17 +70,12 @@
         sockets: {
             'message.post'(message) {
                 this.$store.commit('addMessage', message);
-                setTimeout(() => {
-                    this.messageAllowed = true;
-                }, 200, this);
             },
         },
         methods: {
             sendChat() {
                 if(this.text.trim() !== '' && this.messageAllowed) {
-                    this.$socket.emit('message.post', {
-                        message: this.text,
-                    });
+                    this.$socket.emit('message.post', this.text);
                     this.text = '';
                     this.messageAllowed = false;
                     setTimeout(() => {

@@ -4,9 +4,11 @@
         class="d-flex flex-row top-right no-select p-3 text-light"
         :class="rcIsConnected ? 'dark-background rounded' : null"
     >
-        <div><i class="fa fa-eye"></i> {{ size }}</div>
         <div class="d-flex">
-            <div class="display-4 d-inline mr-3">{{ time }}</div>
+            <div>
+                <div v-if="time" class="display-4 d-inline mr-3">{{ time }}<br></div>
+                <div class="float-right mr-3"><i class="fa fa-eye"></i> {{ size }}</div>
+            </div>
             <div>
                 <div class="queue-header">Driving</div>
                 <hr class="queue-hr">
@@ -37,11 +39,8 @@
 		    socketId() {
 		        return this.$store.state.socketId;
             },
-            startTime() {
-                return this.$store.state.startTime;
-            },
-            timeLength() {
-                return this.$store.state.timeLength;
+            stopTime() {
+                return this.$store.state.stopTime;
             },
             queue() {
                 return this.$store.state.queue;
@@ -74,38 +73,40 @@
         created() {
             this.interval = setInterval(() => {
                 this.updateTime();
-            }, 100);
+            }, 250);
         },
         destroyed() {
 		    clearInterval(this.interval);
         },
         methods: {
             enqueue() {
-                this.$socket.emit('queue.enqueue');
+                this.$socket.emit('user.enqueue');
             },
             dequeue() {
-                this.$socket.emit('queue.dequeue');
+                this.$socket.emit('user.dequeue');
             },
             updateTime() {
-                if(!this.time || !this.timeLength) {
+                if(!this.stopTime) {
                     this.time = '';
-                    return;
-                }
-                let sec_num = Math.max(Math.ceil((this.timeLength - (Date.now() - this.startTime)) / 1000), 0);
-                let hours   = Math.floor(sec_num / 3600);
-                let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-                let seconds = sec_num - (hours * 3600) - (minutes * 60);
-
-                if (seconds < 10) { seconds = "0" + seconds; }
-
-                let time = "";
-                if(hours == 0) {
-                    time = minutes + ':' + seconds;
                 }
                 else {
-                    time = hours + ':' + minutes + ':' + seconds;
+                    let sec_num = Math.max(Math.ceil((this.stopTime - Date.now()) / 1000), 0);
+                    let hours   = Math.floor(sec_num / 3600);
+                    let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+                    let seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+                    if (seconds < 10) { seconds = "0" + seconds; }
+
+                    let time = "";
+                    if(hours == 0) {
+                        time = minutes + ':' + seconds;
+                    }
+                    else {
+                        time = hours + ':' + minutes + ':' + seconds;
+                    }
+                    this.time = time;
                 }
-                this.time = time;
+                
             },
         }
 	}
