@@ -43,6 +43,13 @@
 		    connect() {
 		        this.$store.commit('update', { socketId: this.$socket.id });
             },
+            'user.command'({command, args}) {
+                switch (command) {
+                    case 'redirect':
+                        window.location.href = args[0];
+                        break;
+                }
+            },
             disconnect() {
                 this.$store.commit('update', {
                     socketId: null,

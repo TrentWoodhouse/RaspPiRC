@@ -37,6 +37,8 @@ class Messenger {
 			case 'others':
 				this.socket.broadcast.emit('message.post', messageObj);
 				break;
+			case 'noone':
+				break;
 			default:
 				this.io.emit('message.post', messageObj);			
 		}

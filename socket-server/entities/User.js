@@ -3,6 +3,7 @@ class User {
 		this.id = id;
 		this.name = name;
 		this.colorCode = colorCode;
+		this.isAdmin = false;
 	}
 }
 
