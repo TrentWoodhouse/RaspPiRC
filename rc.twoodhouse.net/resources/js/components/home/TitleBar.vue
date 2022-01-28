@@ -4,7 +4,7 @@
             <a target="_blank" href="http://www.twoodhouse.net">
                 <img src="../../../img/TWLogo.svg">
             </a>
-            <div v-if="!compact" class="d-inline">
+            <div class="d-inline">
                 <div class="d-none d-lg-inline">Raspberry Pi RC Car</div>
                 <div class="d-inline d-lg-none">RPI RC Car</div>
             </div>
@@ -15,11 +15,6 @@
 <script>
 	export default {
 		name: "TitleBar",
-        computed: {
-		    compact() {
-		        return this.$store.state.settings.compact;
-            }
-        }
 	}
 </script>
 

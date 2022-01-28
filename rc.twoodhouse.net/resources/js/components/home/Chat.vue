@@ -1,7 +1,7 @@
 <template>
-    <div class="d-flex flex-row align-items-end bottom-left p-3 text-light">
+    <div v-if="!windowNeedsRotated" class="d-flex flex-row align-items-end bottom-left p-3 text-light">
         <div
-            v-if="!hideChat"
+            v-if="show"
             :class="{'dark-background': rcIsConnected, rounded: rcIsConnected}"
         >
             <div v-for="(message, index) in messages" :key="index" class="messages-item">
@@ -17,7 +17,6 @@
             </div>
             <div class="no-select">
                 <input
-                    v-if="!windowNeedsRotated"
                     type="text"
                     class="dark-box"
                     v-model="text" :maxlength="50"
@@ -28,8 +27,8 @@
                 >
             </div>
         </div>
-        <b-link class="text-light" :class="{'ml-1': !hideChat}" @click="$store.commit('updateSettings', { hideChat: !hideChat })">
-            <i class="fa fa-2x" :class="{'fa-caret-left': !hideChat, 'fa-caret-right': hideChat}"></i>
+        <b-link class="text-light" :class="{'ml-1': show}" @click="show = !show">
+            <i class="fa fa-2x" :class="{'fa-caret-left': show, 'fa-caret-right': !show}"></i>
         </b-link>
     </div>
 </template>
@@ -42,6 +41,7 @@
                 text: '',
                 messageAllowed: true,
                 focused: false,
+                show: true,
             }
         },
         computed: {
@@ -59,9 +59,6 @@
             },
             windowWidth() {
 		        return this.$store.state.windowWidth;
-            },
-            hideChat() {
-                return this.$store.state.settings.hideChat;
             },
             rcIsConnected() {
                 return this.$store.getters.rcIsConnected;
