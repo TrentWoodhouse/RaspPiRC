@@ -17,11 +17,7 @@ let store = new Vuex.Store({
         windowHeight: 0,
         windowWidth: 0,
         isMobile: isMobile,
-        settings: {
-            controller: isMobile ? enums.controllers.TOUCH : enums.controllers.KEY,
-            compact: false,
-            hideChat: false,
-        }
+        controller: isMobile ? enums.controllers.TOUCH : enums.controllers.KEY,
     },
     getters: {
         isConnected(state) {
@@ -46,9 +42,6 @@ let store = new Vuex.Store({
         },
         update(state, payload) {
             Object.assign(state, payload);
-        },
-        updateSettings(state, payload) {
-            state.settings = Object.assign({}, state.settings, payload);
         },
     },
 });

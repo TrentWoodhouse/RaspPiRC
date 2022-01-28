@@ -4,6 +4,7 @@ class KeyboardController {
         this.domElement = domElement;
         this.fps = fps;
         this.callback = callback;
+        this.running = false;
 
         //Keys to watch
         this._upKey = false;
@@ -13,7 +14,7 @@ class KeyboardController {
 
         //Remove tabindex
         if (this.domElement !== document) {
-            this.domElement.setAttribute( 'tabindex', -1);
+            this.domElement.setAttribute('tabindex', -1);
         }
 
         //Set event functions
@@ -26,19 +27,25 @@ class KeyboardController {
     }
 
     start() {
-        this.domElement.addEventListener( 'keydown', this._onKeyDown, false );
-        this.domElement.addEventListener( 'keyup', this._onKeyUp, false );
-        this.interval = setInterval(() => {
-            this._processData();
-        }, 1000 / this.fps);
+        if(!this.running) {
+            this.running = true;
+            this.domElement.addEventListener( 'keydown', this._onKeyDown, false );
+            this.domElement.addEventListener( 'keyup', this._onKeyUp, false );
+            this.interval = setInterval(() => {
+                this._processData();
+            }, 1000 / this.fps);
+        }
     };
 
     stop() {
-        this.domElement.removeEventListener( 'keydown', this._onKeyDown, false );
-        this.domElement.removeEventListener( 'keyup', this._onKeyUp, false );
-        clearInterval(this.interval);
-        this._speedBuffer = new Array(this.fps).fill(0);
-        this._turnBuffer = new Array(this.fps).fill(0);
+        if(this.running) {
+            this.running = false;
+            this.domElement.removeEventListener( 'keydown', this._onKeyDown, false );
+            this.domElement.removeEventListener( 'keyup', this._onKeyUp, false );
+            clearInterval(this.interval);
+            this._speedBuffer = new Array(this.fps).fill(0);
+            this._turnBuffer = new Array(this.fps).fill(0);
+        }
     };
 
     _processData() {

@@ -12,7 +12,7 @@
             <div>
                 <div class="queue-header">Driving</div>
                 <hr class="queue-hr">
-                <div v-if="!compact">
+                <div v-if="queue.length < 20">
                     <div v-for="(user, i) in queue" :key="user.id" class="queue-item">{{ (i + 1) + ". " + user.name }}</div>
                 </div>
                 <div v-else>
@@ -50,9 +50,6 @@
             },
             inControl() {
                 return this.$store.getters.inControl;
-            },
-            compact() {
-                return this.$store.state.settings.compact;
             },
             me() {
 		        return this.queue.filter(user => this.socketId === user.id)[0];

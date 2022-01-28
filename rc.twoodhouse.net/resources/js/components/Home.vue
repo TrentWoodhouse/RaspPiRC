@@ -1,30 +1,30 @@
 <template>
     <div class="home overflow-hidden w-100 h-100">
-        <Video></Video>
-        <Status></Status>
-        <TitleBar></TitleBar>
-        <Queue></Queue>
-        <Chat></Chat>
-        <Options></Options>
-        <NameModal></NameModal>
-        <OptionsModal></OptionsModal>
+        <Controls/>
+        <Video/>
+        <Status/>
+        <TitleBar/>
+        <Queue/>
+        <Chat/>
+        <NameModal/>
+        <ControllerSelection/>
     </div>
 </template>
 
 <script>
-    import OptionsModal from "./home/modals/OptionsModal";
     import TitleBar from "./home/TitleBar";
     import Status from "./home/Status";
     import Chat from "./home/Chat"
     import Queue from "./home/Queue";
     import NameModal from "./home/modals/NameModal";
     import Video from "./home/Video";
-    import Options from "./home/Options";
+    import ControllerSelection from "./home/ControllerSelection";
+    import Controls from "./home/Controls";
 	export default {
 		name: "Home",
         components: {
-		    OptionsModal,
-            Options,
+            Controls,
+		    ControllerSelection,
             NameModal,
             Queue,
 		    TitleBar,
@@ -70,8 +70,8 @@
         methods: {
             updateWindowDimensions() {
                 this.$store.commit('update', {
-                    windowHeight: window.innerHeight,
-                    windowWidth: window.innerWidth,
+                    windowHeight: Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0),
+                    windowWidth: Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0),
                 })
             }
         }
