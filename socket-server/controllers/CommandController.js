@@ -1,101 +1,142 @@
 const { insults } = require('../insults');
 const sha256 = require('crypto-js/sha256');
-const { config } = require('../config');
 
 class CommandController {
     constructor(io, socket, state, messenger) {
-        this.io = io;
-        this.socket = socket;
-        this.state = state;
-        this.messenger = messenger;
-        this.attemptCounter = 0;
-        this.commands = {
-            login: this.login.bind(this),
-            logout: this.logout.bind(this),
-            shutdown: this.shutdown.bind(this),
-            reboot: this.reboot.bind(this),
-            announce: this.announce.bind(this),
+        this.__io = io;
+        this.__socket = socket;
+        this.__state = state;
+        this.__messenger = messenger;
+        this.__attemptCounter = 0;
+        this.__commands = {
+            login: {
+                execute: this.__login.bind(this),
+                validate: (command) => {
+                    if (command.args.length === 0) return "Login requires a password";
+                    if (this.__state.userExists(this.__socket.id) 
+                        && this.__state.userList.get(this.__socket.id).isAdmin) {
+                        return "You are already logged in";
+                    }
+                    return null;
+                },
+                needsAuth: false
+            },
+            logout: {
+                execute: this.__logout.bind(this),
+                validate: (command) => command.args.length !== 0
+                    ? "Logout doesn't accept any arguments"
+                    : null,
+            },
+            shutdown: {
+                execute: this.__shutdown.bind(this),
+                validate: (command) => {
+                    if (command.args.length !== 0) return "Shutdown doesn't accept any arguments";
+                    if (!this.__rcConnected()) return "RC car isn't connected";
+                    return null;
+                },
+            },
+            reboot: {
+                execute: this.__reboot.bind(this),
+                validate: (command) => {
+                    if (command.args.length !== 0) return "Reboot doesn't accept any arguments";
+                    if (!this.__rcConnected()) return "RC car isn't connected";
+                    return null;
+                },
+            },
+            announce: {
+                execute: this.__announce.bind(this),
+                validate: (command) => command.message.length === 0
+                    ? "Announcement message is required"
+                    : null,
+            },
         }
     }
 
-    isCommand(message) {
-        return message.charAt(0) === '/';
-    }
-    
-	getArgs(message) {
-		if (this.isCommand(message)) {
-            return message.substr(1).split(/\s+/);
-		}
-	}
-
-    hasPermission() {
-        if(this.state.userList.get(this.socket.id).isAdmin) return true;
-        this.messenger.systemMessage('You do not have permission to execute this command', {to: 'self', log: false});
-        return false;
+    __hasCommand(command) {
+        return this.__commands.hasOwnProperty(command.key)
     }
 
-    rcConnected() {
-        if(this.state.rc) return true;
-        this.messenger.systemMessage('No RC car connected', {to: 'self', log: false});
+    __hasPermission(command) {
+        return this.__commands[command.key]?.needsAuth ?? true
+            ? this.__state.userList.get(this.__socket.id).isAdmin
+            : true
     }
+
+    __executeCommand(command) {
+        this.__commands[command.key].execute(command)
+    }
+
+    __validate(command) {
+        return this.__commands[command.key]?.validate(command) ?? null
+    }
+
+    __rcConnected() {
+        if(this.__state.rc) return true;
+=    }
 
     run(command) {
-        let args = this.getArgs(command);
-        if(this.commands.hasOwnProperty(args[0])) {
-            let arg0 = args.shift();
-            this.commands[arg0](...args);
+        if (!command) return;
+
+        if (!this.__hasCommand(command)) {
+            this.__messenger.systemMessage(`'${command.key}' is not a valid command`, {to: 'self', log: false});
+            return;
         }
-        else {
-            this.messenger.systemMessage(`'${args[0]}' is not a valid command`, {to: 'self', log: false});
+
+        if (!this.__hasPermission(command)) {
+            this.__messenger.systemMessage('You do not have permission to run this command', {to: 'self', log: false});
+            return;
         }
+
+        let errorMsg = this.__validate(command)
+        if (errorMsg) {
+            this.__messenger.systemMessage(`Couldn't run "/${command.key}": ${errorMsg}`, {to: 'self', log: false});
+            return;
+        }
+
+        this.__executeCommand(command)
     }
 
-    login(password) {
-        if(sha256(password).toString() === config.LOGIN_PASS_ENCRYPTED) {
-            if(this.state.userExists(this.socket.id)) {
-                this.state.userList.get(this.socket.id).isAdmin = true;
-                this.messenger.systemMessage('Logged in', {to: 'self', log: false});
+    __login(command) {
+        if(sha256(command.message).toString() === process.env.LOGIN_PASS_ENCRYPTED) {
+            if(this.__state.userExists(this.__socket.id)) {
+                this.__state.userList.get(this.__socket.id).isAdmin = true;
+
+                this.__messenger.systemMessage('Logged in', {to: 'self', log: false});
             }
         }
         else {
-            this.attemptCounter++;
-            if(this.attemptCounter < 5) {
-                this.messenger.systemMessage('Invalid password', {to: 'self', log: false});
+            this.__attemptCounter++;
+            if(this.__attemptCounter < 5) {
+                this.__messenger.systemMessage('Invalid password', {to: 'self', log: false});
 
             }
-            else if (this.attemptCounter < 5 + insults.length) {
-                this.messenger.systemMessage(`Invalid password ${insults[this.attemptCounter - 5]}`, {to: 'self', log: false});
+            else if (this.__attemptCounter < 5 + insults.length) {
+                this.__messenger.systemMessage(`Invalid password ${insults[this.__attemptCounter - 5]}`, {to: 'self', log: false});
             }
             else {
-                this.io.to(this.socket.id).emit('user.command', {command: 'redirect', args: ['https://www.youtube.com/watch?v=ezrWznE4JMw']});
+                this.io.to(this.__socket.id).emit('user.command', {command: 'redirect', args: ['https://www.youtube.com/watch?v=ezrWznE4JMw']});
             }
         }
     }
 
-    logout() {
-        let user = this.state.userList.get(this.socket.id);
-        if(user.isAdmin) {
+    __logout() {
+        if (this.__state.userExists(this.__socket.id)) {
+            let user = this.__state.userList.get(this.__socket.id);
             user.isAdmin = false;
-            this.messenger.systemMessage('Logged out', {to: 'self', log: false});
+            this.__messenger.systemMessage('Logged out', {to: 'self', log: false});
         }
     }
 
-    shutdown() {
-        if(this.hasPermission() && this.rcConnected()) {
-            this.io.to(this.state.rc.id).emit('rc.command', {command: 'shutdown'});
-        }
+    __shutdown() {
+        this.__io.to(this.__state.rc.id).emit('rc.command', {command: 'shutdown'});
     }
 
-    reboot() {
-        if(this.hasPermission() && this.rcConnected()) {
-            this.io.to(this.state.rc.id).emit('rc.command', {command: 'reboot'});
-        }
+    __reboot() {
+        this.__io.to(this.__state.rc.id).emit('rc.command', {command: 'reboot'});
     }
 
-    announce(...args) {
-        if(this.hasPermission()) {
-            this.messenger.announce(args.join(' '));
-        }
+    __announce(command) {
+        this.__messenger.announce(command.message);
     }
 }
 

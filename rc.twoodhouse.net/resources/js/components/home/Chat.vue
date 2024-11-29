@@ -17,13 +17,14 @@
             </div>
             <div class="no-select">
                 <input
-                    type="text"
+                    :type="attemptingLogin ? 'password' : 'text'"
                     class="dark-box"
-                    v-model="text" :maxlength="50"
-                    @keyup.enter="sendChat()"
+                    v-model="text" 
+                    :maxlength="50"
+                    @keyup.enter="processText()"
                     @focus="focused = true"
                     @blur="focused = false"
-                    placeholder="Send a message..."
+                    :placeholder="attemptingLogin ? 'Enter your password' : 'Send a message...'"
                 >
             </div>
         </div>
@@ -34,6 +35,8 @@
 </template>
 
 <script>
+    const LOGIN_COMMAND = '/login';
+
 	export default {
 		name: "Chat",
         data() {
@@ -42,6 +45,7 @@
                 messageAllowed: true,
                 focused: false,
                 show: true,
+                attemptingLogin: false,
             }
         },
         computed: {
@@ -49,7 +53,7 @@
                 return this.$store.state.messages.slice(-(Math.max(Math.round(Math.min(this.windowHeight, this.windowWidth) / 46) - 2, 4)));
             },
             compact() {
-		        return this.$store.state.settings.compact;
+		        return this.$store.state?.settings?.compact;
             },
             windowNeedsRotated() {
                 return this.$store.getters.windowNeedsRotated;
@@ -70,15 +74,28 @@
             },
         },
         methods: {
-            sendChat() {
-                if(this.text.trim() !== '' && this.messageAllowed) {
-                    this.$socket.emit('message.post', this.text);
-                    this.text = '';
-                    this.messageAllowed = false;
-                    setTimeout(() => {
-                        this.messageAllowed = true;
-                    }, 200, this);
+            processText() {
+                if (this.text.trim() !== '' && this.messageAllowed) {
+                    if (this.attemptingLogin) {
+                        this.sendMessage(`${LOGIN_COMMAND} ${this.text}`)
+                        this.attemptingLogin = false;
+                    }
+                    else if (this.text.trim() === LOGIN_COMMAND) {
+                        this.attemptingLogin = true;
+                        this.text = '';
+                    }
+                    else {
+                        this.sendMessage(this.text);
+                    }
                 }
+            },
+            sendMessage(message) {
+                this.$socket.emit('message.post', message);
+                this.text = '';
+                this.messageAllowed = false;
+                setTimeout(() => {
+                    this.messageAllowed = true;
+                }, 200, this);
             },
             color(colorCode) {
                 let cc = colorCode % 6;
@@ -108,7 +125,7 @@
         bottom: 0;
     }
 
-    input[type=text].dark-box {
+    input.dark-box {
         width: 400px;
         background-color: rgba(0, 0, 0, 0.5);
         box-sizing: content-box;
