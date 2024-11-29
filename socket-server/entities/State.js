@@ -1,6 +1,5 @@
 const { Timer } = require('./Timer');
 const { Queue } = require('./Queue');
-const { config } = require('../config');
 
 class State {
     constructor(io) {
@@ -8,7 +7,7 @@ class State {
         this.rc = null;
         this.userList = new Map();
         this.queue = new Queue();
-        this.timer = new Timer(config.CONTROL_TIME, () => {
+        this.timer = new Timer(process.env.CONTROL_TIME, () => {
             this.dequeueUser(this.queue.getFirst().id).broadcast();
         });
         this.userCounter = 0;
@@ -36,7 +35,7 @@ class State {
     enqueueUser(userId) {
         if(!this.queue.contains(userId)) {
             this.queue.addUser(this.userList.get(userId));
-            if(this.queue.size() > config.FREE_USE_CUTOFF && !this.timer.isRunning()) {
+            if(this.queue.size() > process.env.FREE_USE_CUTOFF && !this.timer.isRunning()) {
                 this.timer.start();
             }
 
@@ -48,7 +47,7 @@ class State {
 
     dequeueUser(userId) {
         if(this.queue.contains(userId)) {
-			if(this.queue.size() <= config.FREE_USE_CUTOFF + 1) {
+			if(this.queue.size() <= process.env.FREE_USE_CUTOFF + 1) {
 				this.timer.stop();
                 this.changes.stopTime = this.timer.stopTime();
 			}
